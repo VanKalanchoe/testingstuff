@@ -109,7 +109,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
-      <AdditionalIncludeDirectories>E:\dev\testingstuff\SDL3\SDL3\include;E:\dev\testingstuff\SDL3\SDL3_ttf\include;E:\dev\testingstuff\SDL3;E:\dev\testingstuff\SDL3\SDL3_image-3.1.0\include;E:\dev\testingstuff\SDL3\glm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\dev\testingstuff\SDL3\SDL3\include;E:\dev\testingstuff\SDL3\SDL3_ttf\include;E:\dev\testingstuff\SDL3;E:\dev\testingstuff\SDL3\SDL3_image-3.1.0\include;E:\dev\testingstuff\SDL3\glm;E:\dev\testingstuff\SDL3\imgui</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
@@ -158,6 +158,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="imgui.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SDL3.cpp" />
     <ClCompile Include="test.cpp" />

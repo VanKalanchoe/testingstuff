@@ -1,3 +1,4 @@
+/*
 #define SDL_MAIN_USE_CALLBACKS
 #include <iostream>
 #include <ostream>
@@ -351,6 +352,103 @@ static int Draw()
         colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
 
         SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, nullptr);
+
+        for (size_t i = 0; i < gpuResourcesList.size(); i++)
+        {
+            SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
+
+            SDL_GPUBufferBinding buffer_bindingVertex = {.buffer = gpuResourcesList[i].vertexBuffer, .offset = 0};
+            SDL_BindGPUVertexBuffers(renderPass, 0, &buffer_bindingVertex, 1);
+            SDL_GPUBufferBinding buffer_bindingIndex = {.buffer = gpuResourcesList[i].indexBuffer, .offset = 0};
+            SDL_BindGPUIndexBuffer(renderPass, &buffer_bindingIndex, SDL_GPU_INDEXELEMENTSIZE_16BIT);
+            SDL_GPUTextureSamplerBinding texture_sampler_binding = {
+                .texture = gpuResourcesList[i].texture, .sampler = gpuResourcesList[i].sampler
+            };
+            SDL_BindGPUFragmentSamplers(renderPass, 0, &texture_sampler_binding, 1);
+            glm::mat4 matrixUniforms;
+            glm::vec4 fragUniformBottomRights;
+            if (i == 0)
+            {
+                // Matrix math
+                glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f * t), glm::vec3(0.0f, 0.0f, 1.0f));
+                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, -0.5f, 0.0f));
+                matrixUniforms = translationMatrix * rotationMatrix;
+
+                // Update fragment uniform color
+                fragUniformBottomRights = glm::vec4(1.0f, 0.5f + SDL_sinf(t) * 1.0f, 1.0f, 1.0f);
+            }
+            if (i == 1)
+            {
+                // Matrix math
+                glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f * t), glm::vec3(0.0f, 0.0f, 1.0f));
+                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(-0.5f, 0.5f, 0.0f));
+                matrixUniforms = translationMatrix * rotationMatrix;
+
+                // Update fragment uniform color
+                fragUniformBottomRights = glm::vec4(1.0f, 0.5f + SDL_sinf(t) * 1.0f, 1.0f, 1.0f);
+            }
+            if (i == 2)
+            {
+                // Matrix math
+                glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
+                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, -0.5f, 0.0f));
+                matrixUniforms = translationMatrix * rotationMatrix;
+
+                // Update fragment uniform color
+                fragUniformBottomRights = glm::vec4(1.0f, 0.5f + SDL_sinf(t) * 1.0f, 1.0f, 1.0f);
+            }
+            if (i == 3)
+            {
+                // Matrix math
+                glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), glm::radians(45.0f * t), glm::vec3(0.0f, 0.0f, 1.0f));
+                glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.5f, 0.5f, 0.0f));
+                matrixUniforms = translationMatrix * rotationMatrix;
+
+                // Update fragment uniform color
+                fragUniformBottomRights = glm::vec4(1.0f, 0.5f + SDL_sinf(t) * 1.0f, 1.0f, 1.0f);
+            }
+            
+            // Push the matrix and fragment uniform data to the GPU
+            SDL_PushGPUVertexUniformData(cmdbuf, 0, glm::value_ptr(matrixUniforms), sizeof(glm::mat4));
+            SDL_PushGPUFragmentUniformData(cmdbuf, 0, glm::value_ptr(fragUniformBottomRights), sizeof(glm::vec4));
+
+            SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
+        }
+       
+        SDL_EndGPURenderPass(renderPass);
+    }
+
+    SDL_SubmitGPUCommandBuffer(cmdbuf);
+
+    return SDL_APP_CONTINUE;
+}
+
+/*static int Draw()
+{
+    SDL_GPUCommandBuffer* cmdbuf = SDL_AcquireGPUCommandBuffer(device);
+    if (cmdbuf == nullptr)
+    {
+        SDL_Log("AcquireGPUCommandBuffer failed: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    SDL_GPUTexture* swapchainTexture;
+    if (!SDL_AcquireGPUSwapchainTexture(cmdbuf, window, &swapchainTexture, nullptr, nullptr))
+    {
+        SDL_Log("WaitAndAcquireGPUSwapchainTexture failed: %s", SDL_GetError());
+        return SDL_APP_FAILURE;
+    }
+
+    if (swapchainTexture != nullptr)
+    {
+        SDL_GPUColorTargetInfo colorTargetInfo = {nullptr};
+        colorTargetInfo.texture = swapchainTexture;
+        colorTargetInfo.clear_color = SDL_FColor{0.212f, 0.075f, 0.541f, 1.0f};
+        //colorTargetInfo.clear_color = SDL_FColor { 0.0f, 0.0f, 0.0f, 1.0f };
+        colorTargetInfo.load_op = SDL_GPU_LOADOP_CLEAR;
+        colorTargetInfo.store_op = SDL_GPU_STOREOP_STORE;
+
+        SDL_GPURenderPass* renderPass = SDL_BeginGPURenderPass(cmdbuf, &colorTargetInfo, 1, nullptr);
         SDL_BindGPUGraphicsPipeline(renderPass, Pipeline);
 
         SDL_GPUBufferBinding buffer_binding1 = {.buffer = gpuResourcesList[1].vertexBuffer, .offset = 0};
@@ -414,7 +512,7 @@ static int Draw()
         // Update fragment uniform color
         glm::vec4 fragUniformBottomRights3 = glm::vec4(1.0f, 0.5f + cos(t) * 1.0f, 1.0f, 1.0f);
 
-        /*// Push the matrix and fragment uniform data to the GPU
+        // Push the matrix and fragment uniform data to the GPU
         SDL_PushGPUVertexUniformData(cmdbuf, 0, glm::value_ptr(matrixUniforms3), sizeof(glm::mat4));
         SDL_PushGPUFragmentUniformData(cmdbuf, 0, glm::value_ptr(fragUniformBottomRights3), sizeof(glm::vec4));
         SDL_DrawGPUIndexedPrimitives(renderPass, 6, 1, 0, 0, 0);
@@ -425,7 +523,7 @@ static int Draw()
         SDL_GPUTextureSamplerBinding texture_sampler_binding4 = {
             .texture = gpuResourcesList[3].texture, .sampler = gpuResourcesList[3].sampler
         };
-        SDL_BindGPUFragmentSamplers(renderPass, 0, &texture_sampler_binding4, 1);*/
+        SDL_BindGPUFragmentSamplers(renderPass, 0, &texture_sampler_binding4, 1);
         // Matrix math
         glm::mat4 scale2 = glm::scale(glm::mat4(1.0f), 0.5f * glm::vec3(1.0f, 1.0f, 1.0f));
         glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), 0.0f, glm::vec3(0.0f, 0.0f, 1.0f));
@@ -446,10 +544,10 @@ static int Draw()
     SDL_SubmitGPUCommandBuffer(cmdbuf);
 
     return SDL_APP_CONTINUE;
-}
+}#1#
 
 SDL_Surface* imageData3;
-/* This function runs once at startup. */
+/* This function runs once at startup. #1#
 SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
 {
     SDL_SetAppMetadata("Example Renderer Clear", "1.0", "com.example.renderer-clear");
@@ -598,17 +696,17 @@ SDL_AppResult SDL_AppInit(void** appstate, int argc, char** argv)
     drawQuadTexture(imageData);
     drawQuadTexture(imageData2);
     drawQuadTexture(imageData3);
-
+    drawQuadTexture(nullptr);
 
     return SDL_APP_CONTINUE;
 }
 
-/* This function runs when a new event (mouse input, keypresses, etc) occurs. */
+/* This function runs when a new event (mouse input, keypresses, etc) occurs. #1#
 SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
 {
     if (event->type == SDL_EVENT_QUIT)
     {
-        return SDL_APP_SUCCESS; /* end the program, reporting success to the OS. */
+        return SDL_APP_SUCCESS; /* end the program, reporting success to the OS. #1#
     }
     if (event->type == SDL_EVENT_KEY_DOWN)
     {
@@ -621,7 +719,7 @@ SDL_AppResult SDL_AppEvent(void* appstate, SDL_Event* event)
     return SDL_APP_CONTINUE;
 }
 
-/* This function runs once per frame, and is the heart of the program. */
+/* This function runs once per frame, and is the heart of the program. #1#
 SDL_AppResult SDL_AppIterate(void* appstate)
 {
     Draw();
@@ -632,7 +730,7 @@ SDL_AppResult SDL_AppIterate(void* appstate)
 
 void SDL_AppQuit(void* appstate, SDL_AppResult result)
 {
-    /* SDL will clean up the window for us. */
+    /* SDL will clean up the window for us. #1#
     SDL_ReleaseGPUGraphicsPipeline(device, Pipeline);
     for (const auto& resources : gpuResourcesList)
     {
@@ -646,3 +744,7 @@ void SDL_AppQuit(void* appstate, SDL_AppResult result)
     SDL_DestroyWindow(window);
     SDL_DestroyGPUDevice(device);
 }
+*/
+
+
+
